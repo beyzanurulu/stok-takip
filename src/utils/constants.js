@@ -1,11 +1,40 @@
 // Shared constants used across the app
 
+// Backend kategorileriyle uyumlu isimler
 export const CATEGORIES = [
-  "Ayakkabı",
-  "Omuz Çantası",
-  "Okul Çantası",
-  "Eşofman",
-  "Aksesuar",
+  "Sneaker",
+  "Spor Ayakkabı",
+  "Günlük Ayakkabı",
+  "Bot"
+];
+
+// Backend kategori ID eşlemesi (backend'den dönen örneklere göre)
+export const CATEGORY_ID_BY_NAME = {
+  "Spor Ayakkabı": 1,
+  "Günlük Ayakkabı": 2,
+  "Bot": 4,
+  "Sneaker": 9
+};
+
+export const GENDERS = [
+  "Erkek",
+  "Kadın",
+  "Unisex",
+  "Çocuk"
+];
+
+export const COLORS = [
+  "Siyah",
+  "Beyaz",
+  "Mavi",
+  "Kırmızı",
+  "Yeşil",
+  "Sarı",
+  "Turuncu",
+  "Pembe",
+  "Mor",
+  "Kahverengi",
+  "Gri"
 ];
 
 export const MOCK_ITEMS = [

@@ -2,13 +2,15 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Card } from "../components/ui/Card.jsx";
 import Button from "../components/ui/Button.jsx";
 import { Search, Save, X } from "lucide-react";
-import { CATEGORIES } from "../utils/constants.js";
+import { CATEGORIES, GENDERS, COLORS } from "../utils/constants.js";
 
 export default function StockUpdatePage({ items, setItems, onBack }) {
   const [query, setQuery] = useState("");
   const [editingItem, setEditingItem] = useState(null);
   const [editForm, setEditForm] = useState({});
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
   const searchRef = useRef(null);
 
   // Autocomplete suggestions
@@ -90,16 +92,31 @@ export default function StockUpdatePage({ items, setItems, onBack }) {
     item.id.toLowerCase().includes(query.toLowerCase())
   );
 
+  // Sayfalama mantığı
+  const totalPages = Math.ceil(filtered.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = filtered.slice(startIndex, endIndex);
+
+  // Sayfa değiştiğinde en üste scroll
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query]);
+
   const handleEdit = (item) => {
     setEditingItem(item.id);
     setEditForm({
       name: item.name,
+      sku: item.sku || item.id,
+      description: item.description || "",
       category: item.category,
       stock: item.stock,
-      reorderPoint: item.reorderPoint,
+      rop: item.rop || item.reorderPoint,
+      size: item.size || "",
+      color: item.color || "",
+      gender: item.gender || "",
       price: item.price,
-      cost: item.cost,
-      barcode: item.barcode || ""
+      isForKids: item.isForKids || false
     });
   };
 
@@ -109,12 +126,16 @@ export default function StockUpdatePage({ items, setItems, onBack }) {
         ? { 
             ...item, 
             name: editForm.name,
+            sku: editForm.sku,
+            description: editForm.description,
             category: editForm.category,
             stock: Number(editForm.stock),
-            reorderPoint: Number(editForm.reorderPoint),
+            rop: Number(editForm.rop),
+            size: editForm.size ? Number(editForm.size) : null,
+            color: editForm.color,
+            gender: editForm.gender,
             price: Number(editForm.price),
-            cost: Number(editForm.cost),
-            barcode: editForm.barcode
+            isForKids: editForm.isForKids
           }
         : item
     ));
@@ -183,12 +204,14 @@ export default function StockUpdatePage({ items, setItems, onBack }) {
             <div>Kategori</div>
             <div>Stok</div>
             <div>ROP</div>
+            <div>Boyut</div>
+            <div>Renk</div>
+            <div>Cinsiyet</div>
             <div>Fiyat (₺)</div>
-            <div>Maliyet (₺)</div>
-            <div>Barkod</div>
+            <div>Çocuk</div>
             <div>İşlem</div>
           </div>
-          {filtered.map(item => (
+          {paginatedItems.map(item => (
             <div key={item.id} className="table-row">
               <div>
                 {editingItem === item.id ? (
@@ -202,7 +225,21 @@ export default function StockUpdatePage({ items, setItems, onBack }) {
                   <span>{item.name}</span>
                 )}
               </div>
-              <div>{item.id}</div>
+
+              <div>
+                {editingItem === item.id ? (
+                  <input
+                    type="text"
+                    className="input table-input"
+                    value={editForm.sku}
+                    onChange={(e) => handleInputChange('sku', e.target.value)}
+                    placeholder="SKU"
+                  />
+                ) : (
+                  <span>{item.sku || item.id}</span>
+                )}
+              </div>
+
               <div>
                 {editingItem === item.id ? (
                   <select
@@ -235,11 +272,55 @@ export default function StockUpdatePage({ items, setItems, onBack }) {
                   <input
                     type="number"
                     className="input table-input"
-                    value={editForm.reorderPoint}
-                    onChange={(e) => handleInputChange('reorderPoint', e.target.value)}
+                    value={editForm.rop}
+                    onChange={(e) => handleInputChange('rop', e.target.value)}
                   />
                 ) : (
-                  <span>{item.reorderPoint}</span>
+                  <span>{item.rop || item.reorderPoint || "-"}</span>
+                )}
+              </div>
+              <div>
+                {editingItem === item.id ? (
+                  <input
+                    type="number"
+                    step="0.5"
+                    className="input table-input"
+                    value={editForm.size}
+                    onChange={(e) => handleInputChange('size', e.target.value)}
+                    placeholder="Boyut"
+                  />
+                ) : (
+                  <span>{item.size || "-"}</span>
+                )}
+              </div>
+              <div>
+                {editingItem === item.id ? (
+                  <select
+                    className="input table-input"
+                    value={editForm.color}
+                    onChange={(e) => handleInputChange('color', e.target.value)}
+                  >
+                    {COLORS.map(color => (
+                      <option key={color} value={color}>{color}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span>{item.color || "-"}</span>
+                )}
+              </div>
+              <div>
+                {editingItem === item.id ? (
+                  <select
+                    className="input table-input"
+                    value={editForm.gender}
+                    onChange={(e) => handleInputChange('gender', e.target.value)}
+                  >
+                    {GENDERS.map(gender => (
+                      <option key={gender} value={gender}>{gender}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <span>{item.gender || "-"}</span>
                 )}
               </div>
               <div>
@@ -254,29 +335,19 @@ export default function StockUpdatePage({ items, setItems, onBack }) {
                   <span>₺{item.price?.toLocaleString() || 0}</span>
                 )}
               </div>
+
               <div>
                 {editingItem === item.id ? (
-                  <input
-                    type="number"
+                  <select
                     className="input table-input"
-                    value={editForm.cost}
-                    onChange={(e) => handleInputChange('cost', e.target.value)}
-                  />
+                    value={editForm.isForKids}
+                    onChange={(e) => handleInputChange('isForKids', e.target.value === "true")}
+                  >
+                    <option value={false}>Hayır</option>
+                    <option value={true}>Evet</option>
+                  </select>
                 ) : (
-                  <span>₺{item.cost?.toLocaleString() || 0}</span>
-                )}
-              </div>
-              <div>
-                {editingItem === item.id ? (
-                  <input
-                    type="text"
-                    className="input table-input"
-                    value={editForm.barcode}
-                    onChange={(e) => handleInputChange('barcode', e.target.value)}
-                    placeholder="Barkod"
-                  />
-                ) : (
-                  <span>{item.barcode || "-"}</span>
+                  <span>{item.isForKids ? "Evet" : "Hayır"}</span>
                 )}
               </div>
               <div>
@@ -305,6 +376,31 @@ export default function StockUpdatePage({ items, setItems, onBack }) {
             </div>
           ))}
         </div>
+
+        {/* Sayfalama */}
+        {totalPages > 1 && (
+          <div className="pagination">
+            <Button 
+              onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+              disabled={currentPage === 1}
+              className="pagination-btn"
+            >
+              ← Önceki
+            </Button>
+            
+            <span className="pagination-info">
+              Sayfa {currentPage} / {totalPages} ({filtered.length} ürün)
+            </span>
+            
+            <Button 
+              onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+              disabled={currentPage === totalPages}
+              className="pagination-btn"
+            >
+              Sonraki →
+            </Button>
+          </div>
+        )}
       </Card>
     </div>
   );

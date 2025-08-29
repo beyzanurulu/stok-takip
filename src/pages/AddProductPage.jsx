@@ -17,17 +17,23 @@ export default function AddProductPage({ form, setForm, errors, onSubmit, onBack
       <Card>
         <CardHeader title="Ürün Bilgileri" />
         <div className="card__body">
-          <div className="form-grid">
-            <label className="form-row">
-              <span>Ürün Adı</span>
-              <input 
-                className={`input ${errors.name ? "input--error" : ""}`} 
-                value={form.name} 
-                onChange={e => setForm({...form, name: e.target.value})} 
-                placeholder="Ürün adını girin"
-              />
-              {errors.name && <div className="error">{errors.name}</div>}
-            </label>
+                     <div className="form-grid">
+             <label className="form-row">
+               <span>Ürün Adı</span>
+               <input 
+                 className={`input ${errors.name ? "input--error" : ""}`} 
+                 value={form.name} 
+                 onChange={e => setForm({...form, name: e.target.value})} 
+                 placeholder="Ürün adını girin"
+               />
+               {errors.name && <div className="error">{errors.name}</div>}
+             </label>
+
+             <input 
+               type="hidden"
+               value={form.backendId || ""}
+               readOnly
+             />
 
             <label className="form-row">
               <span>Kategori</span>
@@ -77,17 +83,51 @@ export default function AddProductPage({ form, setForm, errors, onSubmit, onBack
             </label>
 
             <label className="form-row">
-              <span>Maliyet (₺)</span>
+              <span>Boyut</span>
               <input 
                 type="number" 
-                className={`input ${errors.cost ? "input--error" : ""}`} 
-                value={form.cost} 
-                onChange={e => setForm({...form, cost: e.target.value})} 
-                placeholder="0"
+                step="0.5"
+                className="input"
+                value={form.size || ""}
+                onChange={e => setForm({...form, size: e.target.value})}
+                placeholder="Örn: 42 veya 42.5"
               />
-              {errors.cost && <div className="error">{errors.cost}</div>}
             </label>
 
+            <label className="form-row">
+              <span>Renk</span>
+              <input 
+                className="input"
+                value={form.color || ""}
+                onChange={e => setForm({...form, color: e.target.value})}
+                placeholder="Örn: Siyah"
+              />
+            </label>
+
+            <label className="form-row">
+              <span>Cinsiyet</span>
+              <select 
+                className="input"
+                value={form.gender || ""}
+                onChange={e => setForm({...form, gender: e.target.value})}
+              >
+                <option value="">Seçiniz</option>
+                <option value="male">Erkek</option>
+                <option value="female">Kadın</option>
+                <option value="unisex">Unisex</option>
+              </select>
+            </label>
+
+            <label className="form-row form-row--full">
+              <span>SKU</span>
+              <input 
+                className={`input ${errors.sku ? "input--error" : ""}`} 
+                value={form.sku}
+                onChange={e => setForm({...form, sku: e.target.value})}
+                placeholder="Örn: PEG40-BLK-42"
+              />
+              {errors.sku && <div className="error">{errors.sku}</div>}
+            </label>
             <label className="form-row form-row--full">
               <span>Barkod / SKU Notu</span>
               <input 

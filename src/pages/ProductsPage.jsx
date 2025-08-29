@@ -15,9 +15,12 @@ export default function ProductsPage({
   onOpenAdd, 
   onBack,
   isAdmin,
-  setItems
+  removeProduct,
+  loadProductsPage
 }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 25;
   const searchRef = useRef(null);
 
   // Autocomplete suggestions
@@ -29,7 +32,7 @@ export default function ProductsPage({
     
     // Ürün adlarından öneriler
     items.forEach(item => {
-      if (item.name.toLowerCase().includes(searchTerm)) {
+      if ((item.name || "").toLowerCase().includes(searchTerm)) {
         results.push({
           type: 'product',
           text: item.name,
@@ -52,10 +55,11 @@ export default function ProductsPage({
     
     // SKU'lardan öneriler
     items.forEach(item => {
-      if (item.id.toLowerCase().includes(searchTerm)) {
+      const skuOrId = String(item.sku || item.id || "");
+      if (skuOrId.toLowerCase().includes(searchTerm)) {
         results.push({
           type: 'sku',
-          text: item.id,
+          text: skuOrId,
           name: item.name,
           icon: '🏷️'
         });
@@ -94,17 +98,29 @@ export default function ProductsPage({
 
   const filteredItems = useMemo(() => {
     return items.filter((item) => {
-      const matchesQuery = query === "" || 
-        item.name.toLowerCase().includes(query.toLowerCase()) ||
-        item.id.toLowerCase().includes(query.toLowerCase());
-      
+      const nameStr = String(item.name || "").toLowerCase();
+      const skuOrId = String(item.sku || item.id || "").toLowerCase();
+      const queryStr = String(query || "").toLowerCase();
+
+      const matchesQuery = queryStr === "" || nameStr.includes(queryStr) || skuOrId.includes(queryStr);
       const matchesCategory = category === "Hepsi" || item.category === category;
-      
-      const matchesLowStock = !onlyLow || (item.stock > 0 && item.stock <= item.reorderPoint);
+      const ropValue = Number(item.rop ?? item.reorderPoint ?? 0);
+      const matchesLowStock = !onlyLow || (Number(item.stock ?? 0) > 0 && Number(item.stock ?? 0) <= ropValue);
       
       return matchesQuery && matchesCategory && matchesLowStock;
     });
   }, [items, query, category, onlyLow]);
+
+  // Sayfalama mantığı
+  const totalPages = Math.ceil(filteredItems.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedItems = filteredItems.slice(startIndex, endIndex);
+
+  // Sayfa değiştiğinde en üste scroll
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [query, category, onlyLow]);
 
   const getStockStatus = (item) => {
     if (item.stock === 0) return { status: "out", text: "Tükendi", class: "chip--danger" };
@@ -112,14 +128,19 @@ export default function ProductsPage({
     return { status: "ok", text: "Normal", class: "chip--soft" };
   };
 
-  const handleDeleteItem = (itemId) => {
+  const handleDeleteItem = async (itemId) => {
     if (!isAdmin) {
       alert("Bu işlemi sadece admin kullanıcıları yapabilir!");
       return;
     }
     
     if (confirm(`${items.find(item => item.id === itemId)?.name} ürününü silmek istediğinizden emin misiniz?`)) {
-      setItems(prevItems => prevItems.filter(item => item.id !== itemId));
+      try {
+        await removeProduct(itemId);
+      } catch (err) {
+        console.error("Ürün silinirken hata:", err);
+        alert("Ürün silinirken bir hata oluştu. Lütfen tekrar deneyin.");
+      }
     }
   };
 
@@ -204,7 +225,7 @@ export default function ProductsPage({
             </div>
 
             <div style={{ fontSize: "14px", color: "var(--muted)" }}>
-              {filteredItems.length} ürün gösteriliyor
+              {filteredItems.length} üründen {startIndex + 1}-{Math.min(endIndex, filteredItems.length)} gösteriliyor
             </div>
           </div>
         </div>
@@ -226,26 +247,26 @@ export default function ProductsPage({
               {/* Table Header */}
               <div className="table-header">
                 <div>Ürün</div>
+                <div>SKU</div>
                 <div>Kategori</div>
                 <div>Stok</div>
-                <div>ROP</div>
                 <div>Fiyat</div>
                 <div>Durum</div>
-                <div>İşlemler</div>
+                <div>Sil</div>
               </div>
 
               {/* Table Rows */}
-              {filteredItems.map((item) => {
+              {paginatedItems.map((item) => {
                 const stockStatus = getStockStatus(item);
                 return (
                   <div key={item.id} className="table-row">
                     <div>
                       <div className="font-medium">{item.name}</div>
-                      <div className="muted">{item.id}</div>
+                      <div className="muted">{item.sku || item.id}</div>
                     </div>
+                    <div>{item.sku || item.id}</div>
                     <div>{item.category}</div>
                     <div className="font-medium">{item.stock}</div>
-                    <div>{item.reorderPoint}</div>
                     <div className="price">₺{item.price?.toLocaleString() || 0}</div>
                     <div>
                       <span className={`chip ${stockStatus.class}`}>
@@ -253,29 +274,49 @@ export default function ProductsPage({
                       </span>
                     </div>
                     <div>
-                      <div style={{ display: "flex", gap: "8px" }}>
-                        <Button variant="ghost" style={{ padding: "6px" }}>
-                          <Edit2 style={{ width: "14px", height: "14px" }} />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          style={{ 
-                            padding: "6px", 
-                            color: isAdmin ? "var(--danger)" : "var(--muted)",
-                            cursor: isAdmin ? "pointer" : "not-allowed",
-                            opacity: isAdmin ? 1 : 0.5
-                          }}
-                          onClick={() => handleDeleteItem(item.id)}
-                          disabled={!isAdmin}
-                          title={isAdmin ? "Ürünü Sil" : "Bu işlemi sadece admin yapabilir"}
-                        >
-                          <Trash2 style={{ width: "14px", height: "14px" }} />
-                        </Button>
-                      </div>
+                      <Button 
+                        variant="ghost" 
+                        style={{ 
+                          padding: "6px", 
+                          color: isAdmin ? "var(--danger)" : "var(--muted)",
+                          cursor: isAdmin ? "pointer" : "not-allowed",
+                          opacity: isAdmin ? 1 : 0.5
+                        }}
+                        onClick={() => handleDeleteItem(item.id)}
+                        disabled={!isAdmin}
+                        title={isAdmin ? "Ürünü Sil" : "Bu işlemi sadece admin yapabilir"}
+                      >
+                        <Trash2 style={{ width: "14px", height: "14px" }} />
+                      </Button>
                     </div>
                   </div>
                 );
               })}
+            </div>
+          )}
+
+          {/* Sayfalama */}
+          {totalPages > 1 && (
+            <div className="pagination">
+              <Button 
+                onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                disabled={currentPage === 1}
+                className="pagination-btn"
+              >
+                ← Önceki
+              </Button>
+              
+              <span className="pagination-info">
+                Sayfa {currentPage} / {totalPages}
+              </span>
+              
+              <Button 
+                onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                disabled={currentPage === totalPages}
+                className="pagination-btn"
+              >
+                Sonraki →
+              </Button>
             </div>
           )}
         </div>

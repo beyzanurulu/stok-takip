@@ -5,6 +5,20 @@
   box-sizing: border-box;
 }
 
+/* Error message */
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  text-align: center;
+  font-size: 14px;
+  position: relative;
+  z-index: 2;
+}
+
 body, html {
   height: 100%;
   overflow-x: hidden;

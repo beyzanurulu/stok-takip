@@ -6,7 +6,16 @@ export default defineConfig({
   plugins: [react()],
   server: {
     proxy: {
-      "/api": "http://localhost:8080"
+      "/auth": {
+        target: "https://stokyonetim.xyz",
+        changeOrigin: true,
+        secure: true
+      },
+      "/product": {
+        target: "https://stokyonetim.xyz", 
+        changeOrigin: true,
+        secure: true
+      }
     }
   }
 })

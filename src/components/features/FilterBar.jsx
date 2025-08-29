@@ -2,7 +2,7 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Search, Filter, Download, X } from "lucide-react";
 import Button from "../ui/Button.jsx";
 
-export default function FilterBar({ query, onQuery, category, onCategory, onlyLow, onOnlyLow, categories, onExport, items = [] }) {
+export default function FilterBar({ query, onQuery, category, onCategory, onlyLow, onOnlyLow, categories, onExport, items = [], onApplyPriceRange }) {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState([]);
   const [showAdvancedFilters, setShowAdvancedFilters] = useState(false);
@@ -40,12 +40,13 @@ export default function FilterBar({ query, onQuery, category, onCategory, onlyLo
       }
     });
     
-    // SKU'lardan öneriler
+    // SKU'lardan/ID'den öneriler (güvenli stringleştirme)
     items.forEach(item => {
-      if (item.id.toLowerCase().includes(searchTerm)) {
+      const skuOrId = String(item.sku || item.id || "");
+      if (skuOrId.toLowerCase().includes(searchTerm)) {
         results.push({
           type: 'sku',
-          text: item.id,
+          text: skuOrId,
           name: item.name,
           icon: '🏷️'
         });
@@ -67,9 +68,14 @@ export default function FilterBar({ query, onQuery, category, onCategory, onlyLo
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Debounce
+  const debounceRef = useRef(null);
   const handleInputChange = (value) => {
-    onQuery(value);
-    setShowSuggestions(value.length > 0);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      onQuery(value);
+      setShowSuggestions(value.length > 0);
+    }, 250);
   };
 
   const handleSuggestionClick = (suggestion) => {
@@ -168,8 +174,8 @@ export default function FilterBar({ query, onQuery, category, onCategory, onlyLo
               />
             </div>
             <div className="filter-actions">
-              <Button onClick={() => { setMinPrice(""); setMaxPrice(""); }}>Temizle</Button>
-              <Button className="btn--primary" onClick={() => setShowAdvancedFilters(false)}>Uygula</Button>
+              <Button onClick={() => { setMinPrice(""); setMaxPrice(""); onApplyPriceRange && onApplyPriceRange({ min: "", max: "" }); }}>Temizle</Button>
+              <Button className="btn--primary" onClick={() => { onApplyPriceRange && onApplyPriceRange({ min: minPrice, max: maxPrice }); setShowAdvancedFilters(false); }}>Uygula</Button>
             </div>
           </div>
         </div>
