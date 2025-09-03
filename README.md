@@ -17,6 +17,8 @@ Backend base URL: https://stokyonetim.xyz
 - Debounced search suggestions by SKU/name
 - CSV export
 - ErrorBoundary for graceful UI error handling
+<img width="1566" height="896" alt="image" src="https://github.com/user-attachments/assets/63116dd0-4379-47ad-ad09-11e191eaeac2" />
+
 
 ### Tech Stack
 - React 18 + Vite
