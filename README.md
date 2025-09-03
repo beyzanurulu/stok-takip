@@ -1,36 +1,105 @@
-# Stok Takip Frontend (React + Vite)
+## Stock Management Frontend (React + Vite)
 
-FLO temasına (turuncu/beyaz) yakın, modern bir **stok takip** arayüzü.  
-Dashboard, kritik stok uyarıları, kategori bazlı grafik, ürün listesi/arama/filtre ve **Ürün Ekle** modallı hızlı iş akışları içerir. Envanter değeri **maliyet esaslı** hesaplanır.
+This repository hosts the frontend of a full‑stack Stock Management system developed for the FLO Online Internship program. It delivers a modern dashboard, advanced filtering, product CRUD, and a clean integration with a live backend API.
 
-## ✨ Özellikler
-- **Dashboard**: Toplam ürün, toplam stok, düşük/kritik stok, toplam değer
-- **Anlık Uyarılar**: `stok = 0` ve `stok ≤ ROP` ürünler
-- **Grafik**: Kategori bazlı Stok / İhtiyaç (Recharts)
-- **Arama & Filtre**: SKU/Ad/Kategori/Lokasyon + “Sadece kritik stok”
-- **Ürün Ekle**: Modal form, doğrulama, benzersiz SKU üretimi
-- **CSV Dışa Aktar**
-- **Tema**: FLO turuncusu (`#ff6a00`) ve sade kart tasarımları
-- **Mock veri**: Hızlı demo için örnek ürünler
+Demo (Vercel): add your deployed URL
+Backend base URL: https://stokyonetim.xyz
 
-## 🧱 Teknoloji
-- **React 18** + **Vite**
-- **Recharts**, **Lucide Icons**, **Framer Motion** (hazır; kullanım opsiyonel)
-- Saf CSS (Tailwind yok), değişken tabanlı tema
+### Features
+- Dashboard: total SKUs, total stock, low/out-of-stock, total value (sales-price based)
+- Clickable “Low Stock” stat opens a modal listing critical/out-of-stock items
+- Category-based stock distribution chart (Recharts)
+- Products page with search, filters, server-side pagination (25 per page), and admin-only delete
+- Stock Update page: all product fields are editable (name, sku, rop, size, color, gender, price, isForKids, category, stock)
+- Add Product page (full page) with validation
+- Debounced search suggestions by SKU/name
+- CSV export
+- ErrorBoundary for graceful UI error handling
 
-## 🚀 Başlangıç
+### Tech Stack
+- React 18 + Vite
+- Fetch API for data operations (GET, POST, PUT, DELETE, PATCH)
+- Recharts (charts), Lucide Icons (icons)
+- Vanilla CSS with responsive grid/flex layout (no CSS frameworks)
 
-> Gereksinim: Node.js 18+
+### Project Structure (high-level)
+- Pages: `DashboardPage`, `ProductsPage`, `StockUpdatePage`, `SettingsPage`, `AddProductPage`, `Login`
+- Components: `Card`, `Stat`, `Modal`, `FilterBar`, `QuickActions`, `CategoryChart`, `Navbar`, `Sidebar`
+- Hooks: `useProducts` for loading/pagination/CRUD
+- Utils: `normalizeProduct` for mapping backend DTOs to UI‑friendly shapes
+
+---
+
+## Getting Started (Local)
+Requirements: Node.js 18+
 
 ```bash
-# bağımlılıklar
 npm install
+npm run dev   # http://localhost:5173
+```
 
-# geliştirme (5173 portunda sabit)
-npm run dev
+Environment variables (create `.env`):
+```bash
+VITE_API_URL=https://stokyonetim.xyz
+```
 
-# üretim derlemesi
+Build and preview:
+```bash
 npm run build
-
-# build edilmişi önizleme (5173)
 npm run preview
+```
+
+---
+
+## Backend Integration
+- Base URL is provided via `VITE_API_URL` (e.g., `https://stokyonetim.xyz`).
+- Authentication is token‑based (JWT). On login, the token is saved to `localStorage` and added to every request as:
+  - `Authorization: Bearer <token>`
+  - `Authentication: Bearer <token>` (per backend request)
+- Automatic logout: on HTTP 401/403 or if the JWT is expired, the app clears the token and redirects to Login.
+
+### Main Endpoints
+- Auth: `POST /auth/register`, `POST /auth/login` (backend may return a raw JWT string)
+- Products:
+  - `GET /product?page=1&size=25` (server-side pagination for listing)
+  - `GET /product?page=1&size=1000` (load all for dashboard)
+  - `POST /product`, `GET /product/{id}`, `PUT /product/{id}`, `DELETE /product/{id}`
+  - `GET /product/all-stock`, `GET /product/low-stock`
+
+### Data Normalization
+`normalizeProduct` ensures types are consistent and converts `category` objects to a string (e.g., `{ name: "Sneaker" }` → `"Sneaker"`) for rendering and filtering.
+
+---
+
+## Deployment (Vercel)
+Recommended settings:
+- Framework Preset: Vite
+- Root Directory: `./`
+- Build Command: `npm run build`
+- Output Directory: `dist`
+- Install Command: `npm install`
+- Environment Variables: `VITE_API_URL=https://stokyonetim.xyz`
+
+If you encounter “Failed to fetch” in production, the backend must allow CORS for your Vercel domain (see Troubleshooting).
+
+---
+
+## Security & Roles
+- Delete action on the Products page is enabled only for admin users; non‑admins get an error.
+- Product IDs are hidden from the UI but used internally for API operations.
+
+---
+
+## Troubleshooting
+- Failed to fetch / CORS:
+  - Ask backend to allow your origins.
+  - Allow methods: `GET, POST, PUT, PATCH, DELETE, OPTIONS` and headers: `Content-Type, Authorization, Authentication`.
+  - Alternatively, use Vercel rewrites as a temporary proxy if backend changes are not possible.
+- 401/403 after login:
+  - Ensure both headers are sent if required: `Authorization` and `Authentication`.
+  - Expired/invalid tokens trigger auto logout by design.
+- Category not found on product create:
+  - Send `category` as an object: `{ name: string }` and ensure the value matches backend categories.
+
+---
+
