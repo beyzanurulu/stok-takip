@@ -4,7 +4,6 @@ This repository hosts the frontend of a full‑stack Stock Management system dev
 
 Demo (Vercel): add your deployed URL
 Backend base URL: https://stokyonetim.xyz
-<img width="1898" height="913" alt="image" src="https://github.com/user-attachments/assets/8e0172ba-35e6-460a-80cb-ca84b5c05248" />
 
 
 ### Features
@@ -17,7 +16,6 @@ Backend base URL: https://stokyonetim.xyz
 - Debounced search suggestions by SKU/name
 - CSV export
 - ErrorBoundary for graceful UI error handling
-<img width="1566" height="896" alt="image" src="https://github.com/user-attachments/assets/63116dd0-4379-47ad-ad09-11e191eaeac2" />
 
 
 ### Tech Stack
